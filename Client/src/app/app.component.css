@@ -1,0 +1,25 @@
+#container {
+    margin: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.input {
+    width: 300px;
+    margin: 5px;
+}
+
+.row {
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
+    margin: 5px;
+}
+
+.btn {
+    margin-top: 15px;
+    height: fit-content;
+    width: fit-content;
+    margin-left: 5px;
+    border: 1px black solid;
+}

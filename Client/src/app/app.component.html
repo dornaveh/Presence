@@ -1,0 +1,38 @@
+<div id="container">
+    <mat-form-field class=input appearance="fill">
+        <mat-label>Server Location</mat-label>
+        <input matInput [(ngModel)]="server">
+    </mat-form-field>
+    <mat-form-field class=input appearance="fill">
+        <mat-label>User Id</mat-label>
+        <input matInput [(ngModel)]="user">
+    </mat-form-field>
+    <div class="example-button-row btn">
+        <button mat-button (click)=connect()>Connect</button>
+    </div>
+    <div class="example-button-row btn">
+        <button mat-button (click)=echo()>Echo</button>
+    </div>
+    <mat-form-field class=input appearance="fill">
+        <mat-label>Channel</mat-label>
+        <input matInput [(ngModel)]="channel">
+    </mat-form-field>
+    <div class="row">
+        <div class="example-button-row btn">
+            <button mat-button (click)=subscribe()>Subscribe</button>
+        </div>
+    </div>
+    <div class="row">
+        <mat-form-field class=input appearance="fill">
+            <mat-label>Key</mat-label>
+            <input matInput [(ngModel)]="key">
+        </mat-form-field>
+        <mat-form-field class=input appearance="fill">
+            <mat-label>Value</mat-label>
+            <input matInput [(ngModel)]="value">
+        </mat-form-field>
+        <div class="example-button-row btn">
+            <button mat-button (click)=message()>Send</button>
+        </div>
+    </div>
+</div>
