@@ -4,7 +4,7 @@ import { HubConnectionBuilder } from '@microsoft/signalr/dist/esm/HubConnectionB
 export class Backend {
 
     constructor(
-        private onGroupChange: (channel: Channel) => void,
+        private onGroupChange: (channels: Channel[]) => void,
         private server: string,
         private accessTokenFactory: () => string) { }
 
@@ -50,13 +50,14 @@ export class Backend {
         if (ans) {
             this.channels = this.channels.filter(x => x.name !== ans.name);
             this.channels.push(ans);
-            this.onGroupChange(ans);
+            this.onGroupChange(this.channels);
         }
     }
 
     async unsubscribe(channel: string) {
         this.channels = this.channels.filter(x => x.name !== channel);
         await (this.hubConnection as HubConnection).invoke<Channel>("Unsubscribe", channel);
+        this.onGroupChange(this.channels);
     }
 
     async send(channel: string, key: string, value: string) {
@@ -75,7 +76,7 @@ export class Backend {
             if (update.property.value) {
                 channel.properties.push(update.property);
             }
-            this.onGroupChange(channel);
+            this.onGroupChange(this.channels);
         } else {
             console.log("got update on an unsubscribed channel");
         }
@@ -93,7 +94,7 @@ class UpdatedProperty {
     property: Property = new Property();
 }
 
-class Property {
+export class Property {
     key: string = '';
     user: string = '';
     value: string = '';

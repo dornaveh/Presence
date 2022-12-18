@@ -1,41 +1,78 @@
 <div id="container">
-    <mat-form-field class=input appearance="fill">
-        <mat-label>Server Location</mat-label>
-        <input matInput [(ngModel)]="server">
-    </mat-form-field>
-    <mat-form-field class=input appearance="fill">
-        <mat-label>User Id</mat-label>
-        <input matInput [(ngModel)]="user">
-    </mat-form-field>
-    <div class="example-button-row btn">
-        <button mat-button (click)=connect()>Connect</button>
-    </div>
-    <div class="example-button-row btn">
-        <button mat-button (click)=echo()>Echo</button>
-    </div>
-    <mat-form-field class=input appearance="fill">
-        <mat-label>Channel</mat-label>
-        <input matInput [(ngModel)]="channel">
-    </mat-form-field>
-    <div class="row">
-        <div class="example-button-row btn">
-            <button mat-button (click)=subscribe()>Subscribe</button>
-        </div>
-        <div class="example-button-row btn">
-            <button mat-button (click)=unsubscribe()>Unsubscribe</button>
-        </div>
-    </div>
-    <div class="row">
+    <div class="row" *ngIf=!backend>
         <mat-form-field class=input appearance="fill">
-            <mat-label>Key</mat-label>
-            <input matInput [(ngModel)]="key">
+            <mat-label>Server Location</mat-label>
+            <input matInput [(ngModel)]="server">
         </mat-form-field>
         <mat-form-field class=input appearance="fill">
-            <mat-label>Value</mat-label>
-            <input matInput [(ngModel)]="value">
+            <mat-label>User Id</mat-label>
+            <input matInput [(ngModel)]="user">
         </mat-form-field>
         <div class="example-button-row btn">
-            <button mat-button (click)=send()>Send</button>
+            <button mat-button (click)=connect()>Connect</button>
+        </div>
+    </div>
+    <div id="control" *ngIf=backend>
+        <mat-card-header>
+            <mat-card-title>User {{user}}</mat-card-title>
+            <div class="row">
+                <mat-form-field class=input appearance="fill">
+                    <mat-label>Channel</mat-label>
+                    <input matInput [(ngModel)]="channel">
+                </mat-form-field>
+                <div class="example-button-row btn">
+                    <button mat-button (click)=subscribe()>Subscribe</button>
+                </div>
+            </div>
+        </mat-card-header>
+
+        <mat-divider></mat-divider>
+        <div>
+            <div class=channel *ngFor='let c of channels'>
+                <mat-card-header>
+                    <mat-card-title>{{c.channel.name}}</mat-card-title>
+                    <mat-card-subtitle>
+                        <div class="example-button-row btn">
+                            <button mat-button (click)=unsubscribe(c)>Unsubscribe</button>
+                        </div>
+                    </mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                    <table mat-table [dataSource]="c.channel.properties" class="mat-elevation-z8">
+                        <ng-container matColumnDef="user">
+                            <th mat-header-cell *matHeaderCellDef> User </th>
+                            <td style="width:140px" mat-cell *matCellDef="let element"> {{element.user}} </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="key">
+                            <th mat-header-cell *matHeaderCellDef> Key </th>
+                            <td style="width:140px" mat-cell *matCellDef="let element"> {{element.key}} </td>
+                        </ng-container>
+                        <ng-container matColumnDef="value">
+                            <th mat-header-cell *matHeaderCellDef> Value </th>
+                            <td mat-cell *matCellDef="let element"> {{element.value}} </td>
+                        </ng-container>
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                    </table>
+                    <mat-card-footer>
+                        <div class="row">
+                            <mat-form-field class=input appearance="fill">
+                                <mat-label>Key</mat-label>
+                                <input matInput [(ngModel)]=c.key>
+                            </mat-form-field>
+                            <mat-form-field class=input appearance="fill">
+                                <mat-label>Value</mat-label>
+                                <input matInput [(ngModel)]=c.value>
+                            </mat-form-field>
+                            <div class="example-button-row btn">
+                                <button mat-button (click)=clear(c)>Clear</button>
+                            </div>
+
+                        </div>
+                    </mat-card-footer>
+                </mat-card-content>
+            </div>
         </div>
     </div>
 </div>

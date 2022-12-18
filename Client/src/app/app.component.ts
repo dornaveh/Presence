@@ -11,14 +11,14 @@ export class AppComponent {
   server = 'https://localhost:7126/presence';
   user = '111';
   channel = '43111';
-  key = 'aaa';
-  value = 'bbb';
+  channels: ChannelWrapper[] = [];
+  displayedColumns: string[] = ['user', 'key', 'value'];
 
-  private backend: Backend | undefined = undefined;
+  backend: Backend | undefined = undefined;
 
   echo() { }
   connect() {
-    this.backend = new Backend(this.onGroupChange, this.server, () => this.user);
+    this.backend = new Backend(x => { this.onGroupChange(x) }, this.server, () => this.user);
     this.backend.connect();
   }
 
@@ -26,16 +26,44 @@ export class AppComponent {
     this.backend?.subscribe(this.channel);
   }
 
-  unsubscribe() {
-    this.backend?.unsubscribe(this.channel);
+  unsubscribe(cw: ChannelWrapper) {
+    this.backend?.unsubscribe(cw.channel.name);
   }
 
-  send() {
-    this.backend?.send(this.channel, this.key, this.value);
+  send(cw: ChannelWrapper) {
+    this.backend?.send(cw.channel.name, cw.key, cw.value);
   }
 
-  private onGroupChange(channel: Channel) {
-    console.log(channel);
+  clear(cw: ChannelWrapper) {
+    this.backend?.send(cw.channel.name, cw.key, '');
+    cw.key = '';
+    cw.value = '';
   }
+
+  private onGroupChange(newChannels: Channel[]) {
+    this.channels = this.channels.filter(c => newChannels.some(nc => nc.name === c.channel.name));
+    newChannels.forEach(nc => {
+      var cur = this.channels.find(c => c.channel.name === nc.name);
+      if (cur) {
+        cur.channel = nc;
+      } else {
+        this.channels.push(new ChannelWrapper(nc, cw => { this.send(cw) }));
+      }
+    })
+  }
+}
+
+class ChannelWrapper {
+  private _value: string = '';
+  constructor(public channel: Channel, private update: (cw: ChannelWrapper) => void) { }
+  key: string = '';
+  get value() { return this._value }
+  set value(v: string) {
+    this._value = v;
+    if (v && v !== '') {
+      this.update(this);
+    }
+  }
+
 }
 
