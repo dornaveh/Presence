@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
-import { HubConnection } from '@microsoft/signalr/dist/esm/HubConnection';
-import { HubConnectionBuilder } from '@microsoft/signalr/dist/esm/HubConnectionBuilder';
+import { Backend, Channel } from './backend';
 
 @Component({
   selector: 'app-root',
@@ -14,59 +13,29 @@ export class AppComponent {
   channel = '43111';
   key = 'aaa';
   value = 'bbb';
-  private hubConnection: HubConnection | undefined;
 
-  async connect() {
-    try {
-      if (this.hubConnection) {
-        this.hubConnection.stop();
-        this.hubConnection = undefined;
-      }
-      this.hubConnection = new HubConnectionBuilder().withUrl(this.server,
-        { accessTokenFactory: () => { return this.user; } }
-      ).build();
-      this.hubConnection.on('update', (update: PresenceMessage) => {
-        console.log(update);
-      });
-      this.hubConnection.on('echo', x => {
-        console.log(x);
-      });
+  private backend: Backend | undefined = undefined;
 
-      await this.hubConnection.start();
-      this.hubConnection.onclose(() => {
-        console.log("WebSocket closed");
-        setTimeout(() => { this.connect() }, 1000);
-      });
-    } catch (error) {
-      console.error('Could not connect ' + error);
-    }
+  echo() { }
+  connect() {
+    this.backend = new Backend(this.onGroupChange, this.server, () => this.user);
+    this.backend.connect();
   }
 
-  async echo() {
-    await (this.hubConnection as HubConnection).invoke("Echo", "hello");
+  subscribe() {
+    this.backend?.subscribe(this.channel);
   }
 
-  async subscribe() {
-    var success = await (this.hubConnection as HubConnection).invoke<boolean>("Subscribe", this.channel);
-    console.log("subsribe to channel %s was %ssuccessful", this.channel, success ? '' : 'NOT ');
+  unsubscribe() {
+    this.backend?.unsubscribe(this.channel);
   }
 
-  async message() {
-    var m = new PresenceMessage();
-    m.channel = this.channel;
-    m.key = this.key;
-    m.value = this.value;
-    var success = await (this.hubConnection as HubConnection).invoke<boolean>("UpdateChannel", m);
-    console.log("sent to channel %s was %ssuccessful", this.channel, success ? '' : 'NOT ');
+  send() {
+    this.backend?.send(this.channel, this.key, this.value);
   }
 
-
+  private onGroupChange(channel: Channel) {
+    console.log(channel);
+  }
 }
-
-class PresenceMessage {
-  channel: string = '';
-  key: string = '';
-  value: string = '';
-}
-
 

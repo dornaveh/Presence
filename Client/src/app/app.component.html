@@ -21,6 +21,9 @@
         <div class="example-button-row btn">
             <button mat-button (click)=subscribe()>Subscribe</button>
         </div>
+        <div class="example-button-row btn">
+            <button mat-button (click)=unsubscribe()>Unsubscribe</button>
+        </div>
     </div>
     <div class="row">
         <mat-form-field class=input appearance="fill">
@@ -32,7 +35,7 @@
             <input matInput [(ngModel)]="value">
         </mat-form-field>
         <div class="example-button-row btn">
-            <button mat-button (click)=message()>Send</button>
+            <button mat-button (click)=send()>Send</button>
         </div>
     </div>
 </div>
