@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Backend, Channel } from './backend';
 
 @Component({
@@ -16,22 +17,40 @@ export class AppComponent {
 
   backend: Backend | undefined = undefined;
 
+  constructor(private snackBar: MatSnackBar) { }
+
   echo() { }
   connect() {
     this.backend = new Backend(x => { this.onGroupChange(x) }, this.server, () => this.user);
     this.backend.connect();
   }
 
-  subscribe() {
-    this.backend?.subscribe(this.channel);
+  async subscribe() {
+    var success = false;
+    if (this.backend) {
+      success = await this.backend.subscribe(this.channel);
+    }
+    if (!success) {
+      this.snackBar.openFromComponent(FailedComponent, {
+        duration: 2000,
+      });
+    }
   }
 
   unsubscribe(cw: ChannelWrapper) {
     this.backend?.unsubscribe(cw.channel.name);
   }
 
-  send(cw: ChannelWrapper) {
-    this.backend?.send(cw.channel.name, cw.key, cw.value);
+  async send(cw: ChannelWrapper) {
+    var success = false;
+    if (this.backend) {
+      success = await this.backend.send(cw.channel.name, cw.key, cw.value);
+    }
+    if (!success) {
+      this.snackBar.openFromComponent(FailedComponent, {
+        duration: 2000,
+      });
+    }
   }
 
   clear(cw: ChannelWrapper) {
@@ -64,6 +83,10 @@ class ChannelWrapper {
       this.update(this);
     }
   }
-
 }
+
+@Component({
+  template: 'Failed',
+})
+export class FailedComponent { }
 

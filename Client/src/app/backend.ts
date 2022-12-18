@@ -45,12 +45,15 @@ export class Backend {
         await (this.hubConnection as HubConnection).invoke("Echo", "hello");
     }
 
-    async subscribe(channel: string) {
+    async subscribe(channel: string) : Promise<boolean> {
         var ans = await (this.hubConnection as HubConnection).invoke<Channel>("Subscribe", channel);
         if (ans) {
             this.channels = this.channels.filter(x => x.name !== ans.name);
             this.channels.push(ans);
             this.onGroupChange(this.channels);
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -60,13 +63,12 @@ export class Backend {
         this.onGroupChange(this.channels);
     }
 
-    async send(channel: string, key: string, value: string) {
+    async send(channel: string, key: string, value: string) : Promise<boolean> {
         var m = new UpdateMessage();
         m.channel = channel;
         m.key = key;
         m.value = value;
-        var success = await (this.hubConnection as HubConnection).invoke<boolean>("Update", m);
-        console.log("sent to channel %s was %ssuccessful", channel, success ? '' : 'NOT ');
+        return await (this.hubConnection as HubConnection).invoke<boolean>("Update", m);
     }
 
     private onUpdate(update: UpdatedProperty) {

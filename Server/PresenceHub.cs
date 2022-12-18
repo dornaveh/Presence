@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using StackExchange.Redis;
-using System.Collections.Specialized;
-using System.Web;
 
-public class PresenceHub : Hub
+public partial class PresenceHub : Hub
 {
     private readonly IConnectionMultiplexer _redis;
 
@@ -12,29 +10,9 @@ public class PresenceHub : Hub
         this._redis = redis;
     }
 
-    private string User
-    {
-        get
-        {
-            var qs = this.Context?.GetHttpContext()?.Request.QueryString.ToString() ?? "";
-            NameValueCollection query = HttpUtility.ParseQueryString(qs);
-            return query["access_token"] ?? "NOUSER";
-        }
-    }
-
     private RedisValue GetKeyUser(string key)
     {
         return new RedisValue(User + "***" + key);
-    }
-
-    private bool CanAccess(string channel)
-    {
-        return channel.Contains(User);
-    }
-
-    public async Task Echo(string message)
-    {
-        await Clients.Client(Context.ConnectionId).SendAsync("echo", "Echo from server");
     }
 
     public async Task<bool> Update(UpdateMessage message)
