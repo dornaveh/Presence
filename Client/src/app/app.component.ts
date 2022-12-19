@@ -13,7 +13,7 @@ export class AppComponent {
   user = '111';
   channel = '43111';
   channels: ChannelWrapper[] = [];
-  displayedColumns: string[] = ['user', 'key', 'value'];
+  displayedColumns: string[] = ['key', 'user', 'value'];
 
   backend: Backend | undefined = undefined;
 
@@ -62,6 +62,13 @@ export class AppComponent {
   private onGroupChange(newChannels: Channel[]) {
     this.channels = this.channels.filter(c => newChannels.some(nc => nc.name === c.channel.name));
     newChannels.forEach(nc => {
+      nc.properties = nc.properties.sort((a,b)=>{
+        var s = a.key.localeCompare(b.key);
+        if (s!==0) { return s;}          
+        var s = a.user.localeCompare(b.user);
+        if (s!==0) { return s;}          
+        return a.value.localeCompare(b.value);
+      });
       var cur = this.channels.find(c => c.channel.name === nc.name);
       if (cur) {
         cur.channel = nc;

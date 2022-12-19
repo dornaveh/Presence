@@ -5,6 +5,8 @@ public partial class PresenceHub : Hub
 {
     private readonly IConnectionMultiplexer _redis;
 
+    private const string KeyUserDelimeter = "*$%3*";
+
     public PresenceHub(IConnectionMultiplexer redis)
     {
         this._redis = redis;
@@ -12,11 +14,14 @@ public partial class PresenceHub : Hub
 
     private RedisValue GetKeyUser(string key)
     {
-        return new RedisValue(User + "***" + key);
+        return new RedisValue(UserId + KeyUserDelimeter + key);
     }
 
     public async Task<bool> Update(UpdateMessage message)
     {
+        if (string.IsNullOrWhiteSpace(message.Key)) {
+            return false;
+        }
         if (CanAccess(message.Channel))
         {
             var db = this._redis.GetDatabase();
@@ -38,7 +43,7 @@ public partial class PresenceHub : Hub
                 {
                     Key = message.Key,
                     Value = message.Value,
-                    User = User
+                    User = UserId
                 }
             };
             await Clients.Groups(message.Channel).SendCoreAsync("update", new[] { toSend });
@@ -64,7 +69,7 @@ public partial class PresenceHub : Hub
             {
                 Name = channel,
                 Properties = fields.Select(x => {
-                    var userKey = x.Name.ToString().Split("***");
+                    var userKey = x.Name.ToString().Split(KeyUserDelimeter);
                     return new Property
                     {
                         User = userKey[0],

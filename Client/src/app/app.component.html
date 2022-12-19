@@ -39,14 +39,14 @@
                 </mat-card-header>
                 <mat-card-content>
                     <table mat-table [dataSource]="c.channel.properties" class="mat-elevation-z8">
-                        <ng-container matColumnDef="user">
-                            <th mat-header-cell *matHeaderCellDef> User </th>
-                            <td style="width:140px" mat-cell *matCellDef="let element"> {{element.user}} </td>
-                        </ng-container>
-
                         <ng-container matColumnDef="key">
                             <th mat-header-cell *matHeaderCellDef> Key </th>
                             <td style="width:140px" mat-cell *matCellDef="let element"> {{element.key}} </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="user">
+                            <th mat-header-cell *matHeaderCellDef> User </th>
+                            <td style="width:140px" mat-cell *matCellDef="let element"> {{element.user}} </td>
                         </ng-container>
                         <ng-container matColumnDef="value">
                             <th mat-header-cell *matHeaderCellDef> Value </th>

@@ -4,7 +4,7 @@ using System.Web;
 
 public partial class PresenceHub
 {
-    private string User
+    private string UserId
     {
         get
         {
@@ -16,6 +16,6 @@ public partial class PresenceHub
 
     private bool CanAccess(string channel)
     {
-        return channel.Contains(User);
+        return channel.Contains(UserId);
     }
 }
