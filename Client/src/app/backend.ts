@@ -9,10 +9,14 @@ export class Backend {
         private accessTokenFactory: () => string) { }
 
     private hubConnection: HubConnection | undefined;
+    private toDisconnect = false;
 
     private channels: Channel[] = [];
 
     async connect() {
+        if (this.toDisconnect) {
+            return;
+        }
         try {
             if (this.hubConnection) {
                 this.hubConnection.stop();
@@ -62,6 +66,14 @@ export class Backend {
         m.key = key;
         m.value = value;
         return await (this.hubConnection as HubConnection).invoke<boolean>("Update", m);
+    }
+    
+    async disconnect() {
+        this.toDisconnect = true;
+        if (this.hubConnection) {
+            this.hubConnection.stop();
+            this.hubConnection = undefined;
+        }
     }
    
     private onUpdate(update: UpdatedProperty) {

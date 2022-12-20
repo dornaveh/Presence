@@ -25,10 +25,15 @@ export class AppComponent {
     this.temp.channel = '43111';
   }
 
-  echo() { }
   connect() {
     this.backend = new Backend(x => { this.onGroupChange(x) }, this.server + '/presence', () => this.user);
     this.backend.connect();
+  }
+
+  disconnect() {
+    this.backend?.disconnect();
+    this.backend = undefined;
+    this.channels = [];
   }
 
   async subscribe() {

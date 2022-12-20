@@ -40,6 +40,9 @@
     <div id="control" *ngIf=backend>
         <mat-card-header>
             <mat-card-title>User {{user}}</mat-card-title>
+            <div class="example-button-row btn">
+                <button mat-button (click)=disconnect()>Disconnect</button>
+            </div>
             <div class="row">
                 <mat-form-field class=input appearance="fill">
                     <mat-label>Channel</mat-label>
