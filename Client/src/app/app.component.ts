@@ -1,6 +1,8 @@
+import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Backend, Channel } from './backend';
+import { lastValueFrom } from 'rxjs';
+import { Backend, Channel, UpdateMessage } from './backend';
 
 @Component({
   selector: 'app-root',
@@ -9,26 +11,30 @@ import { Backend, Channel } from './backend';
 })
 export class AppComponent {
   title = 'PresenceClient';
-  server = 'https://localhost:7126/presence';
+  server = 'https://localhost:7126';
   user = '111';
-  channel = '43111';
+  temp : UpdateMessage;
   channels: ChannelWrapper[] = [];
   displayedColumns: string[] = ['key', 'user', 'value'];
+  queryResult = '';
 
   backend: Backend | undefined = undefined;
 
-  constructor(private snackBar: MatSnackBar) { }
+  constructor(private snackBar: MatSnackBar, private http: HttpClient) { 
+    this.temp = new UpdateMessage();
+    this.temp.channel = '43111';
+  }
 
   echo() { }
   connect() {
-    this.backend = new Backend(x => { this.onGroupChange(x) }, this.server, () => this.user);
+    this.backend = new Backend(x => { this.onGroupChange(x) }, this.server + '/presence', () => this.user);
     this.backend.connect();
   }
 
   async subscribe() {
     var success = false;
     if (this.backend) {
-      success = await this.backend.subscribe(this.channel);
+      success = await this.backend.subscribe(this.temp.channel);
     }
     if (!success) {
       this.snackBar.openFromComponent(FailedComponent, {
@@ -53,6 +59,16 @@ export class AppComponent {
     }
   }
 
+  async query() {
+    var x = await lastValueFrom(this.http.get<Channel>(this.server + '/access/getchannels?channel=' + this.temp.channel + '&access_token=' + this.user));
+    this.queryResult = JSON.stringify(x, null, 2);
+  }
+
+  async updateTemp() {
+    var x = await lastValueFrom(this.http.post<boolean>(this.server + '/access/update?access_token=' + this.user, this.temp));
+    this.queryResult = JSON.stringify(x, null, 2);
+  }
+
   clear(cw: ChannelWrapper) {
     this.backend?.send(cw.channel.name, cw.key, '');
     cw.key = '';
@@ -62,11 +78,11 @@ export class AppComponent {
   private onGroupChange(newChannels: Channel[]) {
     this.channels = this.channels.filter(c => newChannels.some(nc => nc.name === c.channel.name));
     newChannels.forEach(nc => {
-      nc.properties = nc.properties.sort((a,b)=>{
+      nc.properties = nc.properties.sort((a, b) => {
         var s = a.key.localeCompare(b.key);
-        if (s!==0) { return s;}          
+        if (s !== 0) { return s; }
         var s = a.user.localeCompare(b.user);
-        if (s!==0) { return s;}          
+        if (s !== 0) { return s; }
         return a.value.localeCompare(b.value);
       });
       var cur = this.channels.find(c => c.channel.name === nc.name);
@@ -96,4 +112,5 @@ class ChannelWrapper {
   template: 'Failed',
 })
 export class FailedComponent { }
+
 

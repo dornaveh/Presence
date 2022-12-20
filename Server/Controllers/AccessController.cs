@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using System.Xml.Linq;
 
 namespace CloudPresence.Controllers
 {
@@ -8,29 +6,25 @@ namespace CloudPresence.Controllers
     [Route("[controller]")]
     public class AccessController : ControllerBase
     {
-        private readonly ILogger<AccessController> _logger;
-        IHubContext<PresenceHub> _hub;
+        private ILogger<AccessController> Logger { get; }
+        private PresenceManager PresenceManager { get; }
 
-        public AccessController(ILogger<AccessController> logger, IHubContext<PresenceHub> signalr)
+        public AccessController(ILogger<AccessController> logger, PresenceManager presenceManager)
         {
-            _logger = logger;
-            _hub = signalr;
+            Logger = logger;
+            PresenceManager = presenceManager;
         }
 
-        [HttpGet(Name = "getChannel")]
-        public IEnumerable<Item> Get(string channel)
+        [HttpPost("update")]
+        public async Task<bool> Update(UpdateMessage message)
         {
-            _hub.Clients.All.SendAsync("echo"," (echo from server)");
-            List<Item> items = new List<Item>();
-            items.Add(new Item { Key = "hello", Value = "world" });
-            items.Add(new Item { Key = "hello2", Value = "world2" });
-            return items;
+            return await PresenceManager.Update(message, HttpContext.Request);
         }
-    }
 
-    public class Item
-    {
-        public string Key { get; set; }
-        public string Value { get; set; }
+        [HttpGet("getchannels")]
+        public async Task<Channel?> GetChannel(string channel)
+        {
+            return await PresenceManager.GetChannel(HttpContext.Request, channel);
+        }
     }
 }

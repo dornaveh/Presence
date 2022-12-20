@@ -23,11 +23,8 @@ export class Backend {
             ).build();
 
             this.hubConnection.on('update', (update: UpdatedProperty) => {
+                console.log(update);
                 this.onUpdate(update);
-            });
-
-            this.hubConnection.on('echo', x => {
-                console.log(x);
             });
 
             await this.hubConnection.start();
@@ -39,10 +36,6 @@ export class Backend {
         } catch (error) {
             console.error('Could not connect ' + error);
         }
-    }
-
-    async echo() {
-        await (this.hubConnection as HubConnection).invoke("Echo", "hello");
     }
 
     async subscribe(channel: string) : Promise<boolean> {
@@ -70,7 +63,7 @@ export class Backend {
         m.value = value;
         return await (this.hubConnection as HubConnection).invoke<boolean>("Update", m);
     }
-
+   
     private onUpdate(update: UpdatedProperty) {
         var channel = this.channels.find(x => x.name === update.channel);
         if (channel) {
@@ -85,11 +78,7 @@ export class Backend {
     }
 }
 
-class UpdateMessage {
-    channel: string = '';
-    key: string = '';
-    value: string = '';
-}
+
 
 class UpdatedProperty {
     channel: string = '';
@@ -105,4 +94,10 @@ export class Property {
 export class Channel {
     name: string = ''
     properties: Property[] = [];
+}
+
+export class UpdateMessage {
+    channel: string = '';
+    key: string = '';
+    value: string = '';
 }

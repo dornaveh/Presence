@@ -1,4 +1,6 @@
 using StackExchange.Redis;
+using CloudPresence;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 var redis = "127.0.0.1:6379";
@@ -10,9 +12,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR().AddStackExchangeRedis(redis);
-
-var multiplexer = ConnectionMultiplexer.Connect(redis);
-builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+builder.Services.AddSingleton(sp =>
+{
+    return new PresenceManager(
+        new DAL(ConnectionMultiplexer.Connect(redis)),
+        new AccessChecker(),
+        sp.GetService<IHubContext<PresenceHub>>()
+        );
+});
 
 var app = builder.Build();
 
