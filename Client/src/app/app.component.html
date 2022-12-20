@@ -76,6 +76,12 @@
                             <th mat-header-cell *matHeaderCellDef> Value </th>
                             <td mat-cell *matCellDef="let element"> {{element.value}} </td>
                         </ng-container>
+                        <ng-container matColumnDef="clear">
+                            <th mat-header-cell *matHeaderCellDef></th>
+                            <td style="width:70px" mat-cell *matCellDef="let element">
+                                <button mat-button *ngIf='element.user===user' (click)=clear(c.channel.name,element.key)>Clear</button>
+                            </td>
+                        </ng-container>
                         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                     </table>
@@ -89,9 +95,6 @@
                                 <mat-label>Value</mat-label>
                                 <input matInput [(ngModel)]=c.value>
                             </mat-form-field>
-                            <div class="example-button-row btn">
-                                <button mat-button (click)=clear(c)>Clear</button>
-                            </div>
                         </div>
                     </mat-card-footer>
                 </mat-card-content>

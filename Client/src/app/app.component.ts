@@ -13,14 +13,14 @@ export class AppComponent {
   title = 'PresenceClient';
   server = 'https://localhost:7126';
   user = '111';
-  temp : UpdateMessage;
+  temp: UpdateMessage;
   channels: ChannelWrapper[] = [];
-  displayedColumns: string[] = ['key', 'user', 'value'];
+  displayedColumns: string[] = ['key', 'user', 'value', 'clear'];
   queryResult = '';
 
   backend: Backend | undefined = undefined;
 
-  constructor(private snackBar: MatSnackBar, private http: HttpClient) { 
+  constructor(private snackBar: MatSnackBar, private http: HttpClient) {
     this.temp = new UpdateMessage();
     this.temp.channel = '43111';
   }
@@ -69,10 +69,8 @@ export class AppComponent {
     this.queryResult = JSON.stringify(x, null, 2);
   }
 
-  clear(cw: ChannelWrapper) {
-    this.backend?.send(cw.channel.name, cw.key, '');
-    cw.key = '';
-    cw.value = '';
+  clear(channel: string, key: string) {
+    this.backend?.send(channel, key, '');
   }
 
   private onGroupChange(newChannels: Channel[]) {
