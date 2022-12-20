@@ -1,5 +1,6 @@
-<div id="container">
-    <ng-container *ngIf=!backend>
+<div *ngIf="isConnecting">Connecting</div>
+<div id="container" *ngIf="!isConnecting">
+    <ng-container *ngIf=!isConnected>
         <div class="row">
             <mat-form-field class=input appearance="fill">
                 <mat-label>Server Location</mat-label>
@@ -37,7 +38,7 @@
         </div>
         <div>{{queryResult}}</div>
     </ng-container>
-    <div id="control" *ngIf=backend>
+    <div id="control" *ngIf=isConnected>
         <mat-card-header>
             <mat-card-title>User {{user}}</mat-card-title>
             <div class="example-button-row btn">

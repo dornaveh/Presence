@@ -10,15 +10,24 @@ import { Backend, Channel, UpdateMessage } from './backend';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'PresenceClient';
+
+  private backend = new Backend(x => { this.onGroupChange(x) });
+  private connectRequested = false;
+
   server = 'https://localhost:7126';
   user = '111';
   temp: UpdateMessage;
   channels: ChannelWrapper[] = [];
   displayedColumns: string[] = ['key', 'user', 'value', 'clear'];
   queryResult = '';
+  
+  get isConnecting() {
+    return !this.backend.isConnected && this.connectRequested;
+  }
 
-  backend: Backend | undefined = undefined;
+  get isConnected() {
+    return this.backend.isConnected;
+  }
 
   constructor(private snackBar: MatSnackBar, private http: HttpClient) {
     this.temp = new UpdateMessage();
@@ -26,41 +35,34 @@ export class AppComponent {
   }
 
   connect() {
-    this.backend = new Backend(x => { this.onGroupChange(x) }, this.server + '/presence', () => this.user);
-    this.backend.connect();
+    this.connectRequested = true;
+    this.backend.connect(this.server + '/presence', () => this.user, () => { this.disconnect() });
   }
 
   disconnect() {
-    this.backend?.disconnect();
-    this.backend = undefined;
+    this.connectRequested = false;
+    this.backend.disconnect();
     this.channels = [];
+    this.snackBar.open('Disconnected', undefined, { duration: 5000 });
+    setTimeout(() => {
+      if (!this.isConnected)
+        this.connect()
+    }, 5000);
   }
 
   async subscribe() {
-    var success = false;
-    if (this.backend) {
-      success = await this.backend.subscribe(this.temp.channel);
-    }
-    if (!success) {
-      this.snackBar.openFromComponent(FailedComponent, {
-        duration: 2000,
-      });
+    if (await this.backend.subscribe(this.temp.channel)) {
+      this.snackBar.open('Failed to subscibe', undefined, { duration: 5000 });
     }
   }
 
   unsubscribe(cw: ChannelWrapper) {
-    this.backend?.unsubscribe(cw.channel.name);
+    this.backend.unsubscribe(cw.channel.name);
   }
 
   async send(cw: ChannelWrapper) {
-    var success = false;
-    if (this.backend) {
-      success = await this.backend.send(cw.channel.name, cw.key, cw.value);
-    }
-    if (!success) {
-      this.snackBar.openFromComponent(FailedComponent, {
-        duration: 2000,
-      });
+    if (!await this.backend.send(cw.channel.name, cw.key, cw.value)) {
+      this.snackBar.open('Failed to update', undefined, { duration: 5000 });
     }
   }
 
@@ -75,7 +77,7 @@ export class AppComponent {
   }
 
   clear(channel: string, key: string) {
-    this.backend?.send(channel, key, '');
+    this.backend.send(channel, key, '');
   }
 
   private onGroupChange(newChannels: Channel[]) {
@@ -110,10 +112,3 @@ class ChannelWrapper {
     }
   }
 }
-
-@Component({
-  template: 'Failed',
-})
-export class FailedComponent { }
-
-

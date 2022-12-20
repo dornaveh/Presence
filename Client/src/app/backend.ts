@@ -3,27 +3,24 @@ import { HubConnectionBuilder } from '@microsoft/signalr/dist/esm/HubConnectionB
 
 export class Backend {
 
-    constructor(
-        private onGroupChange: (channels: Channel[]) => void,
-        private server: string,
-        private accessTokenFactory: () => string) { }
+    constructor(private onGroupChange: (channels: Channel[]) => void) { }
 
     private hubConnection: HubConnection | undefined;
-    private toDisconnect = false;
 
     private channels: Channel[] = [];
 
-    async connect() {
-        if (this.toDisconnect) {
-            return;
-        }
+    isConnected = false;
+
+    async connect(server: string,
+        accessTokenFactory: () => string,
+        onDisconnect: () => void) {
         try {
             if (this.hubConnection) {
                 this.hubConnection.stop();
                 this.hubConnection = undefined;
             }
-            this.hubConnection = new HubConnectionBuilder().withUrl(this.server,
-                { accessTokenFactory: this.accessTokenFactory }
+            this.hubConnection = new HubConnectionBuilder().withUrl(server,
+                { accessTokenFactory: accessTokenFactory }
             ).build();
 
             this.hubConnection.on('update', (update: UpdatedProperty) => {
@@ -32,17 +29,29 @@ export class Backend {
             });
 
             await this.hubConnection.start();
+            this.isConnected = true;
+
+            var names = this.channels.map(c => c.name);
+            for (let index = 0; index < names.length; index++) {
+                await this.subscribe(names[index]);
+            }
+
             this.hubConnection.onclose(() => {
                 console.log("WebSocket closed");
-                setTimeout(() => { this.connect(); }, 5000);
+                if (this.hubConnection) {
+                    this.hubConnection.stop();
+                    this.hubConnection = undefined;
+                    this.isConnected = false;
+                    onDisconnect();
+                }
             });
-
         } catch (error) {
             console.error('Could not connect ' + error);
+            onDisconnect();
         }
     }
 
-    async subscribe(channel: string) : Promise<boolean> {
+    async subscribe(channel: string): Promise<boolean> {
         var ans = await (this.hubConnection as HubConnection).invoke<Channel>("Subscribe", channel);
         if (ans) {
             this.channels = this.channels.filter(x => x.name !== ans.name);
@@ -60,23 +69,23 @@ export class Backend {
         this.onGroupChange(this.channels);
     }
 
-    async send(channel: string, key: string, value: string) : Promise<boolean> {
+    async send(channel: string, key: string, value: string): Promise<boolean> {
         var m = new UpdateMessage();
         m.channel = channel;
         m.key = key;
         m.value = value;
         return await (this.hubConnection as HubConnection).invoke<boolean>("Update", m);
     }
-    
+
     async disconnect() {
-        this.toDisconnect = true;
         if (this.hubConnection) {
             this.hubConnection.stop();
             this.hubConnection = undefined;
         }
     }
-   
+
     private onUpdate(update: UpdatedProperty) {
+        console.log(update);
         var channel = this.channels.find(x => x.name === update.channel);
         if (channel) {
             channel.properties = channel.properties.filter(x => x.key !== update.property.key || x.user !== update.property.user);
@@ -89,8 +98,6 @@ export class Backend {
         }
     }
 }
-
-
 
 class UpdatedProperty {
     channel: string = '';
