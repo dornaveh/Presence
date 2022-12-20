@@ -1,7 +1,8 @@
 import { HubConnection } from "@microsoft/signalr";
 import { HubConnectionBuilder } from '@microsoft/signalr/dist/esm/HubConnectionBuilder';
+import { Channel, UpdatedProperty, UpdateMessage } from "./realtime.common";
 
-export class Backend {
+export class RealTimeBackend {
 
     constructor(private onGroupChange: (channels: Channel[]) => void) { }
 
@@ -19,7 +20,7 @@ export class Backend {
                 this.hubConnection.stop();
                 this.hubConnection = undefined;
             }
-            this.hubConnection = new HubConnectionBuilder().withUrl(server,
+            this.hubConnection = new HubConnectionBuilder().withUrl(server + '/presence',
                 { accessTokenFactory: accessTokenFactory }
             ).build();
 
@@ -77,15 +78,15 @@ export class Backend {
         return await (this.hubConnection as HubConnection).invoke<boolean>("Update", m);
     }
 
-    async disconnect() {
+    disconnect() {
         if (this.hubConnection) {
             this.hubConnection.stop();
             this.hubConnection = undefined;
+            this.isConnected = false;
         }
     }
 
     private onUpdate(update: UpdatedProperty) {
-        console.log(update);
         var channel = this.channels.find(x => x.name === update.channel);
         if (channel) {
             channel.properties = channel.properties.filter(x => x.key !== update.property.key || x.user !== update.property.user);
@@ -94,29 +95,7 @@ export class Backend {
             }
             this.onGroupChange(this.channels);
         } else {
-            console.log("got update on an unsubscribed channel");
+            console.error("got update on an unsubscribed channel");
         }
     }
-}
-
-class UpdatedProperty {
-    channel: string = '';
-    property: Property = new Property();
-}
-
-export class Property {
-    key: string = '';
-    user: string = '';
-    value: string = '';
-}
-
-export class Channel {
-    name: string = ''
-    properties: Property[] = [];
-}
-
-export class UpdateMessage {
-    channel: string = '';
-    key: string = '';
-    value: string = '';
 }

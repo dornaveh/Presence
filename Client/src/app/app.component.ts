@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { lastValueFrom } from 'rxjs';
-import { Backend, Channel, UpdateMessage } from './backend';
+import { RealTimeBackend } from './realtime.backend';
+import { Channel, UpdateMessage } from './realtime.common';
+import { RestBackend } from './rest.backend';
 
 @Component({
   selector: 'app-root',
@@ -11,7 +12,8 @@ import { Backend, Channel, UpdateMessage } from './backend';
 })
 export class AppComponent {
 
-  private backend = new Backend(x => { this.onGroupChange(x) });
+  private readonly realtime = new RealTimeBackend(x => { this.onGroupChange(x) });
+  private readonly rest;
   private connectRequested = false;
 
   server = 'https://localhost:7126';
@@ -20,29 +22,34 @@ export class AppComponent {
   channels: ChannelWrapper[] = [];
   displayedColumns: string[] = ['key', 'user', 'value', 'clear'];
   queryResult = '';
-  
+
   get isConnecting() {
-    return !this.backend.isConnected && this.connectRequested;
+    return !this.realtime.isConnected && this.connectRequested;
   }
 
   get isConnected() {
-    return this.backend.isConnected;
+    return this.realtime.isConnected;
   }
 
-  constructor(private snackBar: MatSnackBar, private http: HttpClient) {
+  constructor(private snackBar: MatSnackBar, http: HttpClient) {
     this.temp = new UpdateMessage();
     this.temp.channel = '43111';
+    this.rest = new RestBackend(http);
   }
 
-  connect() {
+  async connect() {
     this.connectRequested = true;
-    this.backend.connect(this.server + '/presence', () => this.user, () => { this.disconnect() });
+    await this.realtime.connect(this.server, () => this.user, () => { this.onDisconnected() });
+    this.connectRequested = false;
   }
 
   disconnect() {
-    this.connectRequested = false;
-    this.backend.disconnect();
+    this.realtime.disconnect();
     this.channels = [];
+  }
+
+  private onDisconnected() {
+    this.disconnect();
     this.snackBar.open('Disconnected', undefined, { duration: 5000 });
     setTimeout(() => {
       if (!this.isConnected)
@@ -51,33 +58,31 @@ export class AppComponent {
   }
 
   async subscribe() {
-    if (await this.backend.subscribe(this.temp.channel)) {
+    if (!await this.realtime.subscribe(this.temp.channel)) {
       this.snackBar.open('Failed to subscibe', undefined, { duration: 5000 });
     }
   }
 
   unsubscribe(cw: ChannelWrapper) {
-    this.backend.unsubscribe(cw.channel.name);
+    this.realtime.unsubscribe(cw.channel.name);
   }
 
   async send(cw: ChannelWrapper) {
-    if (!await this.backend.send(cw.channel.name, cw.key, cw.value)) {
+    if (!await this.realtime.send(cw.channel.name, cw.key, cw.value)) {
       this.snackBar.open('Failed to update', undefined, { duration: 5000 });
     }
   }
 
+  clear(channel: string, key: string) {
+    this.realtime.send(channel, key, '');
+  }
+
   async query() {
-    var x = await lastValueFrom(this.http.get<Channel>(this.server + '/access/getchannels?channel=' + this.temp.channel + '&access_token=' + this.user));
-    this.queryResult = JSON.stringify(x, null, 2);
+    this.queryResult = await this.rest.query(this.server, this.temp.channel, this.user);
   }
 
   async updateTemp() {
-    var x = await lastValueFrom(this.http.post<boolean>(this.server + '/access/update?access_token=' + this.user, this.temp));
-    this.queryResult = JSON.stringify(x, null, 2);
-  }
-
-  clear(channel: string, key: string) {
-    this.backend.send(channel, key, '');
+    this.queryResult = await this.rest.update(this.server, this.user, this.temp);
   }
 
   private onGroupChange(newChannels: Channel[]) {
