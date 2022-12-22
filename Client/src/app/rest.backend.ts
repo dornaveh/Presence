@@ -15,4 +15,9 @@ export class RestBackend {
         var x = await lastValueFrom(this.http.post<boolean>(server + '/access/update?access_token=' + user, message));
         return JSON.stringify(x, null, 2);
     }
+
+    async who(server: string): Promise<string> {
+        var x = await lastValueFrom(this.http.get<{ id: string }>(server + '/access/who'));
+        return x.id;
+    }
 }

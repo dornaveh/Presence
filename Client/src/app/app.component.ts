@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RealTimeBackend } from './realtime.backend';
 import { Channel, UpdateMessage } from './realtime.common';
@@ -16,7 +16,7 @@ export class AppComponent {
   private readonly rest;
   private connectRequested = false;
 
-  server = 'https://localhost:7126';
+  server = '';
   user = '111';
   temp: UpdateMessage;
   channels: ChannelWrapper[] = [];
@@ -31,7 +31,7 @@ export class AppComponent {
     return this.realtime.isConnected;
   }
 
-  constructor(private snackBar: MatSnackBar, http: HttpClient) {
+  constructor(private snackBar: MatSnackBar, http: HttpClient, private zone: NgZone) {
     this.temp = new UpdateMessage();
     this.temp.channel = '43111';
     this.rest = new RestBackend(http);
@@ -85,23 +85,31 @@ export class AppComponent {
     this.queryResult = await this.rest.update(this.server, this.user, this.temp);
   }
 
-  private onGroupChange(newChannels: Channel[]) {
-    this.channels = this.channels.filter(c => newChannels.some(nc => nc.name === c.channel.name));
-    newChannels.forEach(nc => {
-      nc.properties = nc.properties.sort((a, b) => {
-        var s = a.key.localeCompare(b.key);
-        if (s !== 0) { return s; }
-        var s = a.user.localeCompare(b.user);
-        if (s !== 0) { return s; }
-        return a.value.localeCompare(b.value);
-      });
-      var cur = this.channels.find(c => c.channel.name === nc.name);
-      if (cur) {
-        cur.channel = nc;
-      } else {
-        this.channels.push(new ChannelWrapper(nc, cw => { this.send(cw) }));
-      }
+  async who() {
+    this.rest.who(this.server).then(who => {
+      this.snackBar.open('Connected to ' + who, undefined, { duration: 5000 });
     })
+  }
+
+  private onGroupChange(newChannels: Channel[]) {
+    this.zone.run(() => {
+      this.channels = this.channels.filter(c => newChannels.some(nc => nc.name === c.channel.name));
+      newChannels.forEach(nc => {
+        nc.properties = nc.properties.sort((a, b) => {
+          var s = a.key.localeCompare(b.key);
+          if (s !== 0) { return s; }
+          var s = a.user.localeCompare(b.user);
+          if (s !== 0) { return s; }
+          return a.value.localeCompare(b.value);
+        });
+        var cur = this.channels.find(c => c.channel.name === nc.name);
+        if (cur) {
+          cur.channel = nc;
+        } else {
+          this.channels.push(new ChannelWrapper(nc, cw => { this.send(cw) }));
+        }
+      })
+    });
   }
 }
 

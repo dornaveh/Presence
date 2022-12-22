@@ -2,6 +2,10 @@
 <div id="container" *ngIf="!isConnecting">
     <ng-container *ngIf=!isConnected>
         <div class="row">
+            <div class="column">
+                <button mat-button (click)="server='https://cloudpresence123.azurewebsites.net'">Server A</button>
+                <button mat-button (click)="server='https://presence456.azurewebsites.net/'">Server B</button>
+            </div>
             <mat-form-field class=input appearance="fill">
                 <mat-label>Server Location</mat-label>
                 <input matInput [(ngModel)]="server">
@@ -41,8 +45,13 @@
     <div id="control" *ngIf=isConnected>
         <mat-card-header>
             <mat-card-title>User {{user}}</mat-card-title>
-            <div class="example-button-row btn">
-                <button mat-button (click)=disconnect()>Disconnect</button>
+            <div class="row">
+                <div class="example-button-row btn">
+                    <button mat-button (click)=disconnect()>Disconnect</button>
+                </div>
+                <div class="example-button-row btn">
+                    <button mat-button (click)=who()>Who</button>
+                </div>
             </div>
             <div class="row">
                 <mat-form-field class=input appearance="fill">

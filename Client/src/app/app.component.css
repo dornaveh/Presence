@@ -20,6 +20,13 @@
     margin: 5px;
 }
 
+.column {
+    width: fit-content;
+    display: flex;
+    flex-direction: column;
+    margin: 5px;
+}
+
 .btn {
     margin-top: 15px;
     margin-bottom: 15px;

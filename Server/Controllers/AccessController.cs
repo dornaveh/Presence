@@ -8,6 +8,7 @@ namespace CloudPresence.Controllers
     {
         private ILogger<AccessController> Logger { get; }
         private PresenceManager PresenceManager { get; }
+        private static readonly Who ID = new Who();
 
         public AccessController(ILogger<AccessController> logger, PresenceManager presenceManager)
         {
@@ -26,5 +27,16 @@ namespace CloudPresence.Controllers
         {
             return await PresenceManager.GetChannel(HttpContext.Request, channel);
         }
+
+        [HttpGet("who")]
+        public Who Who()
+        {
+            return ID;
+        }
+    }
+
+    public class Who
+    {
+        public string Id { get; set; } =  Guid.NewGuid().ToString();
     }
 }
