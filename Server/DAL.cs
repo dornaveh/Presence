@@ -30,8 +30,10 @@ public class DAL
         var db = this._redis.GetDatabase();
         var userKey = GetUserKey(user, key);
         var channelKey = new RedisKey(channel);
+        
         var hash = new HashEntry(userKey, new RedisValue(value));
         await db.HashSetAsync(channelKey, new[] { hash });
+        await db.KeyExpireAsync(channelKey,TimeSpan.FromDays(3));
     }
 
     public async Task<Channel> GetChannel(string channel)

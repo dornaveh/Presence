@@ -3,7 +3,6 @@ using CloudPresence;
 using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
-var redis = "127.0.0.1:6379";
 
 // Add services to the container.
 
@@ -11,6 +10,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+var redis = "pppa.redis.cache.windows.net:6380,password=uGCQj1CX24buBrIpbQ9q0Ae1ZnKo6xDsYAzCaIFRxOM=,ssl=True,abortConnect=False";
 builder.Services.AddSignalR().AddStackExchangeRedis(redis);
 builder.Services.AddSingleton(sp =>
 {
